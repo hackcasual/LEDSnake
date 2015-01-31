@@ -6,9 +6,7 @@ pixelScale = 20
 
 import pygame, sys
 from pygame.locals import *
-import time
 import numpy as np
-import socket
 import zlib
 
 # set up pygame
@@ -44,18 +42,6 @@ snake = [np.array([5,10])]
 
 snakeLength = 10
 
-subFrameCount = 2
-subFrameHeight = 128 / subFrameCount
-subFrameSize = 1 + subFrameHeight*256*3
-
-# LEDscape message setup
-message = np.zeros(subFrameSize*subFrameCount, np.uint8)
-for subFrame in range(0, subFrameCount):
-    message[subFrame*subFrameSize] = subFrame
-
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.setsockopt(socket.SOL_SOCKET,socket.SO_SNDBUF,int(subFrameSize))
-
 def drawSnake():
     for s in snake:
         pygame.draw.rect(screen, snakeColor,
@@ -76,41 +62,6 @@ def didDie():
             isAlive = False
             snakeColor = (238,130,238)
             return
-
-def sendScreen():
-    global sock
-
-    frame = np.zeros((128,256,3), np.uint8)
-
-    for y in range(0,32):
-        for x in range(0,64):
-            col = screen.get_at((x * pixelScale,y * pixelScale))
-            frame[y + 64][x + 64] = (col[0],col[1],col[2])
-
-    for y in range(32,64):
-        for x in range(0,64):
-            print(31 - y) * pixelScale
-            col = screen.get_at((x * pixelScale,((63 -y) + 32) * pixelScale))
-            frame[y + 32][63 - x] = (col[0],col[1],col[2])
-
-
-    flattenedFrame = frame.reshape(128, 256*3)
-
-    copyWidth = 256
-    copyHeight = 128
-
-    copyLength = copyWidth*3
-
-    for row in range(0, copyHeight):
-        offset = 1 + (row / subFrameHeight)
-        messageOffset = (row*256)*3 + offset
-
-        message[messageOffset:messageOffset+copyLength] = flattenedFrame[row, 0:copyLength]
-
-
-    for subFrame in range(0, subFrameCount):
-        sock.sendto(zlib.compress(message[subFrame*subFrameSize:(subFrame+1)*subFrameSize].tostring()), ("192.168.7.2", 9999))
-
 
 while True:
     screen.fill((0,0,0))
@@ -138,8 +89,6 @@ while True:
     drawWalls()
 
     drawSnake()
-
-    sendScreen()
 
     pygame.display.update()
 
