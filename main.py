@@ -7,7 +7,8 @@ pixelScale = 20
 import pygame, sys
 from pygame.locals import *
 import numpy as np
-import zlib
+import time
+import math
 
 # set up pygame
 pygame.init()
@@ -71,13 +72,10 @@ while True:
             sys.exit()
 
         if event.type == JOYAXISMOTION:
-            oldVel = snakeVel.copy()
+            if event.value != 0:
+                snakeVel = [0, 0]
+                snakeVel[event.axis] = math.copysign(1, event.value)
 
-            if snakeVel[(event.axis + 1) % 2] == 0:
-                snakeVel[event.axis] = event.value
-
-            if np.array_equal(snakeVel, [0,0]):
-                snakeVel = oldVel
 
         if event.type == JOYBUTTONDOWN:
             isAlive = True
