@@ -1,15 +1,13 @@
-__author__ = 'charles'
-
-width, height = 64, 64
-
-pixelScale = 20
-
 import pygame, sys
 from pygame.locals import *
 import numpy as np
 import random
 import time
 import math
+
+width, height = 64, 64
+
+pixelScale = 10
 
 # set up pygame
 pygame.init()
@@ -23,48 +21,49 @@ pygame.joystick.init()
 joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
 joysticks[0].init()
 
-print (joysticks)
-
-snakeVel = np.array([0,0])
-
+snakeVel = [0,0]
 
 walls = []
 
 for x in range(width):
-    walls.append(np.array([x, 0]))
-    walls.append(np.array([x, height - 1]))
+    walls.append([x, 0])
+    walls.append([x, height - 1])
 
 for y in range(width):
-    walls.append(np.array([0, y]))
-    walls.append(np.array([width - 1, y]))
+    walls.append([0, y])
+    walls.append([width - 1, y])
 
 snakeColor = (0,255,128)
 
 isAlive = True
 
-snake = [np.array([5,10])]
+snake = [[5,10]]
 
 snakeLength = 10
 
-fruits = [np.array([20,20])]
+fruits = [[20,20]]
 
-def drawRect(x, y, color):
+
+def draw_rect(x, y, color):
     screen.set_at((int(x),int(y)), color)
 
-def drawSnake():
+
+def draw_snake():
     for s in snake:
-        drawRect(s[0], s[1], snakeColor)
+        draw_rect(s[0], s[1], snakeColor)
 
-def drawWalls():
+
+def draw_walls():
     for w in walls:
-        drawRect(w[0], w[1], (255,0,0))
+        draw_rect(w[0], w[1], (255,0,0))
 
 
-def drawFruit():
+def draw_fruit():
     for f in fruits:
-        drawRect(f[0], f[1], (255, 255, 0))
+        draw_rect(f[0], f[1], (255, 255, 0))
 
-def didDie():
+
+def did_die():
     global snake
     global isAlive
     global snakeColor
@@ -72,23 +71,25 @@ def didDie():
     for w in walls:
         if np.array_equal(w, snake[-1]):
             isAlive = False
-            snakeColor = (238,130,238)
+            snakeColor = (238, 130, 238)
             return
 
-    if len(snake) > 10:
-        for s in snake[:-1]:
-            if np.array_equal(s, snake[-1]):
-                isAlive = False
-                snakeColor = (238,130,238)
-                return
+    for s in snake[:-1]:
+        if np.array_equal(s, snake[-1]):
+            isAlive = False
+            snakeColor = (238, 130, 238)
+            return
 
-def caughtFruit():
+
+def caught_fruit():
     global snakeLength
 
     for i in range(len(fruits)):
         if np.array_equal(fruits[i], snake[-1]):
-            fruits[i] = np.array([random.randint(1, 62),random.randint(1, 62)])
+            fruits[i] = [random.randint(1, 62),
+                         random.randint(1, 62)]
             snakeLength += 5
+
 
 def main():
     global isAlive
@@ -98,7 +99,6 @@ def main():
     global snakeLength
 
     font = pygame.font.Font("5x5_pixel.ttf", 8)
-
 
     while True:
         oldVel = snakeVel
@@ -113,35 +113,33 @@ def main():
                     snakeVel = [0, 0]
                     snakeVel[event.axis % 2] = math.copysign(1, event.value)
 
-
             if event.type == JOYBUTTONDOWN:
                 isAlive = True
                 snakeColor = (0,255,128)
-                snake = [np.array([5,10])]
-                snakeVel = np.array([0,0])
+                snake = [[5,10]]
+                snakeVel = [0,0]
                 snakeLength = 10
 
-        didDie()
+        did_die()
 
-        drawWalls()
+        draw_walls()
 
-        drawSnake()
+        draw_snake()
 
         text = font.render(str((snakeLength - 10) / 5), False, (255, 255, 255))
 
         screen.blit(text, (50,2))
 
-        drawFruit()
+        draw_fruit()
 
-        caughtFruit()
+        caught_fruit()
 
         pygame.transform.scale(screen, (64 * pixelScale, 64 * pixelScale), real_screen)
 
         pygame.display.update()
 
-        if isAlive:
-            newPos = snake[-1] + snakeVel
-            snake.append(newPos)
+        if isAlive and (snakeVel[0] != 0 or snakeVel[1] != 0):
+            snake.append([snake[-1][0] + snakeVel[0], snake[-1][1] + snakeVel[1]])
 
         if len(snake) > snakeLength:
             snake = snake[1:]
